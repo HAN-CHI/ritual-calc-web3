@@ -49,67 +49,94 @@
         </div>
     </div>
     
-    <script>
-        // 使用一個專門提供農曆資料的穩定 API
-        const LUNAR_API = 'https://api.cn-calendar.com/v1/date/'; 
+<script>
+        // 🚨 最終解決方案：改用一個對 CORS 限制極少的萬年曆 API
+        const LUNAR_API_BASE = 'https://api.xinmeihua.com/cgi-bin/v1.1/calendar/'; 
 
-        // 格式化 API 回傳的農曆資料
+        // 格式化 API 回傳的農曆資料 (新 API 格式不同，需要重寫)
         const formatLunar = (data) => {
-            const isLeapText = data.is_leap ? '<span class="lunar-leap">(閏)</span>' : '';
-            return `${data.chinese_year}年 ${data.lunar_month_cn}${isLeapText}月 ${data.lunar_day_cn}`;
+            const lunarData = data.lunar;
+            // 該 API 的年份是數字，需要手動轉換成中文數字 (簡化處理)
+            const yearCn = lunarData.year; 
+            const isLeapText = lunarData.is_leap ? '<span class="lunar-leap">(閏)</span>' : '';
+            
+            return `${yearCn}年 ${lunarData.month_cn}${isLeapText}月 ${lunarData.day_cn}`;
         };
+        
+        // 格式化生肖 (新 API 直接提供)
+        const getZodiac = (data) => {
+            return data.lunar.zodiac;
+        };
+
 
         // 查詢單個國曆日期的農曆資料
         async function getLunarData(dateString) {
             const date = dayjs(dateString);
             const y = date.year();
-            const m = date.month() + 1;
+            const m = date.month(); // month() 是 0-11
             const d = date.date();
             
-            const url = `${LUNAR_API}${y}-${m}-${d}`;
+            // 該 API 格式為: ?year=2025&month=5&day=1
+            const url = `${LUNAR_API_BASE}query?year=${y}&month=${m+1}&day=${d}`;
             
             try {
-                const response = await fetch(url);
+                // 該 API 必須設置 mode=cors 才能在跨域環境下工作
+                const response = await fetch(url, { mode: 'cors' });
                 if (!response.ok) throw new Error('API查詢失敗');
                 const data = await response.json();
+                
+                if (data.status !== 'success' || !data.data) throw new Error('API返回錯誤數據');
                 return data.data;
             } catch (error) {
-                console.error('農曆API錯誤:', error);
+                console.error('農曆API錯誤:', error, url);
                 return null;
             }
         }
 
-        // 查詢農曆對年日期 (需要兩個步驟)
+        // 查詢農曆對年日期 (需要複雜計算)
         async function getLunarAnniversary(deathDateString) {
-            const deathLunar = await getLunarData(deathDateString);
-            if (!deathLunar) return null;
+            const deathData = await getLunarData(deathDateString);
+            if (!deathData) return null;
 
-            const targetLunarYear = deathLunar.lunar_year + 1;
-            const targetLunarMonth = deathLunar.lunar_month;
-            const targetLunarDay = deathLunar.lunar_day;
+            const deathLunar = deathData.lunar;
+            const targetLunarYear = parseInt(deathLunar.year) + 1;
 
-            // 第二次 API 呼叫：查農曆轉國曆 (使用另一個 API 服務)
-            const convertUrl = `https://api.cn-calendar.com/v1/lunar2solar/${targetLunarYear}-${targetLunarMonth}-${targetLunarDay}?is_leap=${deathLunar.is_leap}`;
+            // API 不支持農曆轉國曆，我們必須手動查找次年相同農曆日期的國曆日期。
+            // 這是最複雜且容易失敗的一步，但我們必須嘗試。
+            
+            // Step 1: 預測農曆對年的國曆月份
+            // 預計會在次年同一國曆月附近
+            const deathSolar = dayjs(deathDateString);
+            const targetSolarYear = deathSolar.year() + 1;
+            
+            // Step 2: 查找次年國曆日期，直到找到相同農曆日
+            for (let m = 1; m <= 12; m++) {
+                const dayInMonth = dayjs(`${targetSolarYear}-${m}-01`).daysInMonth();
+                for (let d = 1; d <= dayInMonth; d++) {
+                    const checkDate = dayjs(`${targetSolarYear}-${m}-${d}`);
+                    const checkDateString = checkDate.format('YYYY-MM-DD');
 
-            try {
-                const response = await fetch(convertUrl);
-                if (!response.ok) throw new Error('農曆轉國曆API查詢失敗');
-                const data = await response.json();
+                    const checkData = await getLunarData(checkDateString);
+                    if (!checkData) continue;
+                    
+                    const checkLunar = checkData.lunar;
 
-                const solarDate = dayjs(`${data.data.year}-${data.data.month}-${data.data.day}`).format('YYYY年M月D日');
-                
-                // 為了得到中文農曆，需要再查一次
-                const finalLunar = await getLunarData(solarDate);
-                
-                return {
-                    solar: solarDate,
-                    lunar: finalLunar
-                };
-
-            } catch (error) {
-                console.error('農曆對年API錯誤:', error);
-                return null;
+                    // 檢查農曆年, 月, 日是否都匹配
+                    // 注意：此處忽略閏月狀態，只比較年月日時否相同 (符合華人習俗的簡化對年計算)
+                    if (
+                        parseInt(checkLunar.year) === targetLunarYear &&
+                        checkLunar.month === deathLunar.month && 
+                        checkLunar.day === deathLunar.day
+                    ) {
+                        return {
+                            solar: checkDate.format('YYYY年M月D日'),
+                            lunar: checkData
+                        };
+                    }
+                }
             }
+            
+            return null;
         }
 
 
@@ -132,7 +159,7 @@
 
                 // 顯示載入中
                 document.getElementById('results').querySelectorAll('span').forEach(span => {
-                    span.textContent = '計算中...';
+                    span.textContent = '查詢中...';
                     span.classList.add('loading');
                 });
 
@@ -141,7 +168,7 @@
                 const birthLunarData = await getLunarData(birthInput);
                 if (birthLunarData) {
                     document.getElementById('result-lunar-birth').innerHTML = 
-                        formatLunar(birthLunarData) + " (" + birthLunarData.zodiac_cn + "年)";
+                        formatLunar(birthLunarData) + " (" + getZodiac(birthLunarData) + "年)";
                 } else {
                     document.getElementById('result-lunar-birth').textContent = "查詢失敗";
                 }
@@ -165,6 +192,7 @@
                 document.getElementById('result-anniversary').textContent = anniversary.format('YYYY年M月D日');
 
                 // --- 4. 計算農曆對年 ---
+                document.getElementById('result-lunar-anniversary').textContent = "正在查找...";
                 const anniversaryLunarData = await getLunarAnniversary(deathInput);
                 if (anniversaryLunarData) {
                     document.getElementById('result-lunar-anniversary').innerHTML = 
@@ -182,4 +210,5 @@
         });
     </script>
 </body>
+
 </html>
