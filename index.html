@@ -3,266 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>禾欣生命禮儀助手 - 專業版</title>
+    <title>祭祀期日演算系統 - 專業聯網版</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/lunar-javascript/lunar.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 引入專業農曆庫 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lunar-javascript/1.6.12/lunar.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700;900&display=swap');
-        
-        :root {
-            --brand-blue: #1e3a8a; /* 禾欣深藍 */
-            --brand-gold: #b4925a; /* 質感金 */
-            --bg-color: #fcfbf9;
-        }
-
-        body {
-            font-family: 'Noto Serif TC', serif;
-            background-color: var(--bg-color);
-            color: #333;
-            padding-bottom: 80px;
-        }
-
-        .brand-header {
-            background: white; padding: 1rem; text-align: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 1.5rem;
-            border-bottom: 1px solid #eee;
-        }
-        .brand-logo { height: 80px; margin: 0 auto; object-fit: contain; }
-
-        .nav-container { display: flex; overflow-x: auto; gap: 10px; padding: 0 1rem 1rem; scrollbar-width: none; justify-content: flex-start; }
-        .nav-container::-webkit-scrollbar { display: none; }
-        
-        .nav-btn {
-            white-space: nowrap; padding: 8px 16px; border-radius: 50px; font-size: 0.9rem;
-            font-weight: 700; color: #666; background: white; border: 1px solid #e5e7eb;
-            transition: all 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .nav-btn.active { background: var(--brand-blue); color: white; border-color: var(--brand-blue); }
-
-        .tab-content { display: none; animation: fadeIn 0.3s ease; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .card { background: #ffffff; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.03); border: 1px solid rgba(180, 146, 90, 0.15); padding: 1.5rem; margin-bottom: 1.5rem; }
-
-        .section-title { font-size: 1.2rem; font-weight: 900; color: var(--brand-blue); display: flex; align-items: center; gap: 8px; border-bottom: 2px solid var(--brand-gold); padding-bottom: 0.5rem; margin-bottom: 1.25rem; }
-
-        select, input, textarea { border: 1px solid #e2e8f0; padding: 0.7rem; border-radius: 12px; width: 100%; font-size: 0.95rem; background-color: #f8fafc; font-family: 'Noto Serif TC', serif; }
-
-        .dir-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: 12px; margin-bottom: 8px; border: 1px solid transparent; font-weight: 600; font-size: 0.9rem; }
-        .dir-best { background: #fffbeb; border-color: #fcd34d; color: #92400e; } 
-        .dir-lucky { background: #f0fdf4; border-color: #86efac; color: #166534; } 
-        .dir-bad { background: #fef2f2; border-color: #fca5a5; color: #991b1b; } 
-        .dir-normal { background: #f8fafc; border-color: #e2e8f0; color: #64748b; }
-
-        /* 提醒色塊樣式 */
-        .sha-warning { background: #fff1f2; border: 1px solid #fecdd3; border-left: 4px solid #e11d48; padding: 12px; border-radius: 12px; margin-top: 10px; }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Serif TC', serif; background-color: #0f172a; color: #f8fafc; }
+        .glass-card { background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(180, 150, 80, 0.2); backdrop-filter: blur(12px); }
+        .text-gold { color: #d4af37; }
+        .bg-gold { background-color: #d4af37; }
+        .date-font { font-family: 'Courier New', Courier, monospace; }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.7; }
     </style>
 </head>
-<body class="bg-stone-50">
+<body class="antialiased">
 
-    <header class="brand-header">
-        <h1 class="text-xl font-black tracking-[0.2em] text-slate-800">禾欣生命禮儀</h1>
-        <p class="text-[10px] text-amber-600 font-bold tracking-widest uppercase">Professional Funeral Service System</p>
+<div class="min-h-screen flex flex-col items-center py-10 px-4">
+    <!-- Header -->
+    <header class="max-w-2xl w-full text-center mb-10">
+        <h1 class="text-4xl font-900 tracking-[0.2em] text-gold mb-3">期日演算專家系統</h1>
+        <div class="h-1 w-24 bg-gold mx-auto mb-4"></div>
+        <p class="text-slate-400 text-xs font-bold tracking-[0.4em] uppercase">1900 - 2100 精確天文曆法</p>
     </header>
 
-    <div class="max-w-4xl mx-auto px-4">
-        <nav class="nav-container">
-            <button onclick="switchTab('cal')" id="tab-cal" class="nav-btn active">📅 曆法查詢</button>
-            <button onclick="switchTab('fs')" id="tab-fs" class="nav-btn">🧭 塔位鑑定</button>
-            <button onclick="switchTab('data')" id="tab-data" class="nav-btn">🏺 仙命命理</button>
-        </nav>
+    <main class="max-w-2xl w-full space-y-8">
+        <!-- Input Section -->
+        <section class="glass-card p-8 rounded-[2.5rem] shadow-2xl">
+            <div class="space-y-6">
+                <div class="relative">
+                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4 text-center">請設定往生基準日期 (國曆)</label>
+                    <input type="date" id="dateInput" class="w-full text-center text-4xl font-black bg-slate-900/50 border-2 border-slate-700 rounded-3xl p-6 focus:border-gold focus:ring-4 focus:ring-gold/20 outline-none transition-all date-font text-gold">
+                </div>
+                
+                <button onclick="calculateAll()" class="w-full bg-gold text-slate-900 font-900 py-6 rounded-3xl shadow-[0_10px_30px_rgba(212,175,55,0.3)] hover:bg-yellow-500 active:scale-95 transition-all text-2xl uppercase tracking-[0.1em]">
+                    <i class="fa-solid fa-gear fa-spin mr-3"></i> 啟動數理演算
+                </button>
+            </div>
+        </section>
 
-        <div id="panel-fs" class="tab-content active space-y-4">
-            <div class="card border-t-4 border-emerald-700">
-                <div class="section-title"><span>🧭</span> 塔位方位與命理鑑定</div>
-                <div class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="col-span-2">
-                            <label class="block text-xs font-bold text-slate-500 mb-1">亡者性別</label>
-                            <div class="flex gap-2">
-                                <button onclick="setGender('男')" id="btnMale" class="flex-1 py-2 rounded-lg bg-blue-600 text-white font-bold">男命</button>
-                                <button onclick="setGender('女')" id="btnFemale" class="flex-1 py-2 rounded-lg bg-slate-200 text-slate-600 font-bold">女命</button>
-                            </div>
-                        </div>
-                        <div class="col-span-2">
-                            <label class="block text-xs font-bold text-slate-500 mb-1">出生日期 (國曆)</label>
-                            <div class="grid grid-cols-3 gap-2">
-                                <select id="bornYear" onchange="refreshSolarDays('bornYear','bornMonth','bornDay',updateTower)"></select>
-                                <select id="bornMonth" onchange="refreshSolarDays('bornYear','bornMonth','bornDay',updateTower)"></select>
-                                <select id="bornDay" onchange="updateTower()"></select>
-                            </div>
-                        </div>
+        <!-- Results -->
+        <div id="resultArea" class="hidden space-y-8">
+            
+            <!-- Base Card -->
+            <div class="bg-slate-900 border-2 border-gold/30 p-8 rounded-[2.5rem] relative shadow-inner">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="text-center md:text-left">
+                        <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-2">往生農曆基準</p>
+                        <h2 id="baseLunar" class="text-4xl font-900 text-gold tracking-tighter"></h2>
+                        <p id="baseSolar" class="text-sm font-mono text-slate-500 mt-2"></p>
                     </div>
-                    
-                    <div id="sxDisplay" class="hidden">
-                        <div class="flex flex-col items-center mb-4 py-4 bg-gradient-to-br from-emerald-50 to-white rounded-2xl border border-emerald-100 shadow-sm text-center">
-                            <div id="tSX" class="text-4xl font-black text-emerald-900">--</div>
-                            <div class="flex gap-2 mt-1">
-                                <span id="tGZ" class="text-sm font-bold text-emerald-700">--</span>
-                                <span id="tNY" class="text-sm font-bold text-amber-700">--</span>
-                            </div>
-                        </div>
-
-                        <div id="shaNotice" class="sha-warning hidden">
-                            <div class="text-[10px] text-rose-500 font-bold mb-1">⚠️ 傳統命理提醒 (農曆月份)</div>
-                            <div id="shaText" class="text-rose-900 font-black text-base">--</div>
-                        </div>
-
-                        <div id="dirList" class="space-y-2 mt-4"></div>
+                    <div id="leapIndicator" class="hidden px-5 py-2 bg-red-900/40 border border-red-500/50 rounded-2xl text-xs font-black text-red-400">
+                        <i class="fa-solid fa-triangle-exclamation mr-2"></i> 往生一年內包含閏月
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div id="panel-data" class="tab-content space-y-4">
-            <div class="card">
-                <div class="section-title"><span>🏺</span> 60 仙命與納音速查</div>
-                <select id="xmSelector" onchange="updateXMData()" class="mb-4 font-bold text-blue-900 bg-amber-50"></select>
-                <div id="xmResult" class="grid grid-cols-1 gap-3">
-                    <div class="p-3 bg-slate-50 border-l-4 border-blue-800 rounded">
-                        <span class="text-xs font-bold text-slate-400">納音五行</span>
-                        <div id="xmNayinDisplay" class="text-lg font-black text-slate-800">--</div>
+            <!-- Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-card p-6 rounded-[2rem] border-b-4 border-b-blue-500">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-500">
+                            <i class="fa-solid fa-7"></i>
+                        </div>
+                        <span class="text-xs font-black text-blue-400 uppercase tracking-widest">頭七 (D+6)</span>
                     </div>
-                    <div class="p-3 bg-emerald-50 border-l-4 border-emerald-600 rounded">
-                        <span class="text-xs font-bold text-emerald-600">宜坐山 (六吉)</span>
-                        <div id="xmBigLucky" class="text-sm font-bold">--</div>
+                    <div id="res7" class="text-3xl font-black text-white date-font"></div>
+                </div>
+                <div class="glass-card p-6 rounded-[2rem] border-b-4 border-b-indigo-500">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-500">
+                            <i class="fa-solid fa-hundred-points"></i>
+                        </div>
+                        <span class="text-xs font-black text-indigo-400 uppercase tracking-widest">百日 (D+99)</span>
                     </div>
-                    <div class="p-3 bg-rose-50 border-l-4 border-rose-600 rounded">
-                        <span class="text-xs font-bold text-rose-600">忌座向 (大忌)</span>
-                        <div id="xmBigBad" class="text-sm font-bold text-rose-700">--</div>
+                    <div id="res100" class="text-3xl font-black text-white date-font"></div>
+                </div>
+            </div>
+
+            <!-- Schemes -->
+            <div class="space-y-6">
+                <h3 class="text-center text-xs font-black text-slate-500 tracking-[0.6em] uppercase">對年 (小祥) 智慧精算方案</h3>
+                
+                <!-- Scheme A -->
+                <div class="glass-card p-8 rounded-[2.5rem] border-l-[12px] border-l-amber-600">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="px-4 py-1 bg-amber-600 text-white text-[10px] font-black rounded-full italic tracking-widest">SCHEME A</div>
+                        <span id="diffA" class="text-xs font-mono text-slate-500 font-bold"></span>
                     </div>
+                    <h4 class="text-xl font-black text-amber-500 mb-2">提前法 (死人無閏)</h4>
+                    <div id="dateA" class="text-4xl font-black text-white date-font mb-2"></div>
+                    <div id="lunarA" class="text-lg font-bold text-slate-400 mb-6"></div>
+                    <div id="noteA" class="text-xs leading-relaxed text-slate-400 p-5 bg-black/30 rounded-3xl border border-white/5"></div>
+                </div>
+
+                <!-- Scheme B -->
+                <div class="glass-card p-8 rounded-[2.5rem] border-l-[12px] border-l-teal-600">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="px-4 py-1 bg-teal-600 text-white text-[10px] font-black rounded-full italic tracking-widest">SCHEME B</div>
+                        <span id="diffB" class="text-xs font-mono text-slate-500 font-bold"></span>
+                    </div>
+                    <h4 class="text-xl font-black text-teal-500 mb-2">定日法 (死人直)</h4>
+                    <div id="dateB" class="text-4xl font-black text-white date-font mb-2"></div>
+                    <div id="lunarB" class="text-lg font-bold text-slate-400 mb-6"></div>
+                    <div id="noteB" class="text-xs leading-relaxed text-slate-400 p-5 bg-black/30 rounded-3xl border border-white/5"></div>
                 </div>
             </div>
         </div>
+    </main>
 
-    </div>
+    <footer class="mt-12 text-[10px] text-slate-600 font-bold tracking-[0.3em] uppercase text-center pb-10">
+        Powered by Astronomical Algorithm & Lunar Expert System
+    </footer>
+</div>
 
-    <script>
-        // --- 核心數據庫 (已整合納音與神煞) ---
-        let currentGender = '男';
+<script>
+    function formatDate(d) {
+        const y = d.getYear();
+        const m = String(d.getMonth()).padStart(2, '0');
+        const day = String(d.getDay()).padStart(2, '0');
+        return `${y} - ${m} - ${day}`;
+    }
 
-        const SHEN_SHA = {
-            "鼠": { "男": { 1: "孤獨格、鐵掃", 2: "破月", 4: "犯重婚", 8: "帶桃花", 10: "帶亡神煞" }, "女": { 5: "帶再嫁", 6: "破月", 8: "帶桃花", 9: "帶寡宿", 10: "帶亡神煞", 12: "帶鐵掃" } },
-            "牛": { "男": { 1: "孤獨", 3: "破月", 5: "帶桃花、重婚", 6: "帶鐵掃", 7: "帶亡神煞" }, "女": { 4: "破月", 5: "帶桃花", 6: "再嫁", 7: "帶亡神煞", 9: "帶鐵掃、寡宿" } },
-            "虎": { "男": { 2: "帶桃花", 4: "孤獨格、鐵掃、亡神煞", 6: "犯重婚", 10: "破月" }, "女": { 2: "帶桃花", 3: "破月", 4: "孤獨格、鐵掃、亡神煞", 7: "鐵掃、再嫁", 12: "寡宿" } },
-            "兔": { "男": { 1: "帶亡神煞", 2: "帶鐵掃", 4: "孤獨格", 5: "破月", 7: "犯重婚", 11: "帶桃花" }, "女": { 1: "亡神煞、破月", 8: "鐵掃、再嫁", 11: "帶桃花", 12: "寡宿" } },
-            "龍": { "男": { 1: "帶鐵掃", 4: "孤獨格", 8: "帶桃花、重婚", 10: "帶亡神煞", 12: "破月" }, "女": { 6: "破月", 8: "帶桃花", 10: "帶亡神煞", 11: "再嫁", 12: "帶鐵掃" } },
-            "蛇": { "男": { 1: "破月", 5: "帶桃花", 6: "帶鐵掃", 7: "孤獨格、亡神煞", 9: "犯重婚" }, "女": { 3: "寡宿", 4: "破月", 5: "帶桃花", 7: "再嫁" } },
-            "馬": { "男": { 2: "帶桃花", 4: "帶鐵掃、亡神煞", 7: "帶孤獨格", 8: "破月", 10: "犯重婚" }, "女": { 1: "破月", 2: "帶桃花", 3: "破月", 4: "帶亡神煞", 8: "帶鐵掃", 12: "再嫁" } },
-            "羊": { "男": { 1: "帶亡神煞", 2: "帶鐵掃", 7: "孤獨格", 9: "破月", 11: "帶桃花、重婚" }, "女": { 1: "破月、亡神煞", 3: "寡宿", 8: "帶鐵掃", 11: "帶桃花", 12: "再嫁" } },
-            "猴": { "男": { 1: "帶鐵掃", 4: "破月", 8: "帶桃花", 10: "孤獨、亡神煞", 12: "犯重婚" }, "女": { 1: "再嫁", 6: "寡宿、破月", 8: "帶桃花", 10: "帶亡神煞", 12: "帶鐵掃" } },
-            "雞": { "男": { 1: "犯重婚", 5: "帶桃花", 6: "帶鐵掃", 7: "帶亡神煞", 10: "孤獨格", 11: "破月" }, "女": { 2: "再嫁", 4: "破月", 5: "帶桃花", 6: "寡宿", 7: "帶亡神煞", 9: "帶鐵掃" } },
-            "狗": { "男": { 2: "犯重婚、桃花", 4: "鐵掃、亡神煞", 6: "破月", 10: "孤獨格" }, "女": { 2: "帶桃花", 3: "破月、再嫁", 6: "亡神煞、寡宿", 7: "帶鐵掃" } },
-            "豬": { "男": { 1: "孤獨格", 2: "帶鐵掃", 3: "犯重婚", 7: "破月", 11: "帶桃花" }, "女": { 1: "破月、亡神煞", 4: "再嫁", 8: "帶鐵掃", 9: "寡宿", 11: "帶桃花" } }
-        };
+    function calculateAll() {
+        const input = document.getElementById('dateInput').value;
+        if (!input) return;
 
-        const XM_DATA = {
-            "甲子": { nayin: "海中金", lucky: "子、午、丑、未、壬、丙", bad: "寅、甲、庚、乾、巽、坤" },
-            "乙丑": { nayin: "海中金", lucky: "子、午、卯、酉、乙、辛", bad: "辰、戌、丑、未" },
-            "丙寅": { nayin: "爐中火", lucky: "子、午、寅、申、丙、壬", bad: "丑、未、甲、庚、坤、乾" },
-            "丁卯": { nayin: "爐中火", lucky: "寅、申、乙、辛、丁、癸", bad: "子、午、巳、亥" },
-            "戊辰": { nayin: "大林木", lucky: "子、午、卯、酉、戊、癸", bad: "寅、申、乙、辛、坤、艮" },
-            "己巳": { nayin: "大林木", lucky: "子、午、丑、未、壬、丙", bad: "卯、酉、甲、庚、乾、巽" },
-            "庚午": { nayin: "路旁土", lucky: "子、午、寅、申、丙、壬", bad: "辰、戌、乙、辛、坤、艮" },
-            "辛未": { nayin: "路旁土", lucky: "寅、申、卯、酉、丁、癸", bad: "巳、亥" },
-            "壬申": { nayin: "劍鋒金", lucky: "子、午、卯、酉、戊、癸", bad: "丑、未、乙、辛、艮、巽" },
-            "癸酉": { nayin: "劍鋒金", lucky: "子、午、丑、未、壬、丙", bad: "寅、申、甲、庚、乾、坤" },
-            "甲戌": { nayin: "山頭火", lucky: "子、午、卯、酉、乙、辛", bad: "丑、未、甲、庚" },
-            "乙亥": { nayin: "山頭火", lucky: "寅、申、丙、壬、癸", bad: "子、午、庚、巽" },
-            // ... (其餘 60 甲子依照此格式補齊即可)
-        };
+        const dateParts = input.split('-');
+        const solar = Solar.fromYmd(parseInt(dateParts[0]), parseInt(dateParts[1]), parseInt(dateParts[2]));
+        const lunar = solar.getLunar();
+        
+        document.getElementById('resultArea').classList.remove('hidden');
+        document.getElementById('baseLunar').innerText = `農曆 ${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`;
+        document.getElementById('baseSolar').innerText = `西元基準：${input}`;
 
-        // --- 初始化與邏輯 ---
+        // 頭七 D+6
+        const d7 = solar.next(6);
+        document.getElementById('res7').innerText = `${d7.getYear()} - ${String(d7.getMonth()).padStart(2,'0')} - ${String(d7.getDay()).padStart(2,'0')}`;
 
-        window.onload = function() {
-            initSelectors();
-            updateTower();
-            updateXMData();
-        };
+        // 百日 D+99
+        const d100 = solar.next(99);
+        document.getElementById('res100').innerText = `${d100.getYear()} - ${String(d100.getMonth()).padStart(2,'0')} - ${String(d100.getDay()).padStart(2,'0')}`;
 
-        function initSelectors() {
-            const sy = document.getElementById('bornYear');
-            for(let y=1920; y<=2050; y++) sy.add(new Option(`${y}年`, y));
-            sy.value = 1970;
-
-            const sm = document.getElementById('bornMonth');
-            for(let m=1; m<=12; m++) sm.add(new Option(m + "月", m));
-
-            const xmSel = document.getElementById('xmSelector');
-            Object.keys(XM_DATA).forEach(gz => xmSel.add(new Option(gz, gz)));
-            
-            refreshSolarDays('bornYear','bornMonth','bornDay');
-        }
-
-        function setGender(g) {
-            currentGender = g;
-            document.getElementById('btnMale').className = g === '男' ? 'flex-1 py-2 rounded-lg bg-blue-600 text-white font-bold' : 'flex-1 py-2 rounded-lg bg-slate-200 text-slate-600 font-bold';
-            document.getElementById('btnFemale').className = g === '女' ? 'flex-1 py-2 rounded-lg bg-rose-600 text-white font-bold' : 'flex-1 py-2 rounded-lg bg-slate-200 text-slate-600 font-bold';
-            updateTower();
-        }
-
-        function refreshSolarDays(yId, mId, dId, cb) {
-            const y = parseInt(document.getElementById(yId).value);
-            const m = parseInt(document.getElementById(mId).value);
-            const dSel = document.getElementById(dId);
-            const oldV = dSel.value;
-            dSel.innerHTML = "";
-            const days = new Date(y, m, 0).getDate();
-            for(let d=1; d<=days; d++) dSel.add(new Option(d + "日", d));
-            dSel.value = oldV <= days ? oldV : 1;
-            if(cb) cb();
-        }
-
-        function updateTower() {
-            const y = parseInt(document.getElementById('bornYear').value);
-            const m = parseInt(document.getElementById('bornMonth').value);
-            const d = parseInt(document.getElementById('bornDay').value);
-            
-            const solar = Solar.fromYmd(y, m, d);
-            const lunar = solar.getLunar();
-            const sx = lunar.getYearShengXiao();
-            const gz = lunar.getYearInGanZhi();
-            const lMonth = lunar.getMonth();
-
-            document.getElementById('sxDisplay').classList.remove('hidden');
-            document.getElementById('tSX').innerText = sx;
-            document.getElementById('tGZ').innerText = gz + "年";
-            
-            // 顯示納音
-            const nayin = XM_DATA[gz] ? XM_DATA[gz].nayin : "查詢中";
-            document.getElementById('tNY').innerText = "納音：" + nayin;
-
-            // 判斷神煞
-            const sha = SHEN_SHA[sx] && SHEN_SHA[sx][currentGender] ? SHEN_SHA[sx][currentGender][lMonth] : null;
-            const shaBox = document.getElementById('shaNotice');
-            if(sha) {
-                shaBox.classList.remove('hidden');
-                document.getElementById('shaText').innerText = sha;
-            } else {
-                shaBox.classList.add('hidden');
-            }
-
-            // 方位列表 (範例簡化)
-            document.getElementById('dirList').innerHTML = `<div class="dir-item dir-best"><span>坐西朝東 (兌)</span><span>大吉</span></div>`;
-        }
-
-        function updateXMData() {
-            const gz = document.getElementById('xmSelector').value;
-            const data = XM_DATA[gz];
-            if(data) {
-                document.getElementById('xmNayinDisplay').innerText = data.nayin;
-                document.getElementById('xmBigLucky').innerText = data.lucky;
-                document.getElementById('xmBigBad').innerText = data.bad;
+        // 判斷一年內是否有閏月
+        let hasLeap = false;
+        // 檢查從往生日開始的一年（365天）內農曆月份是否有閏月
+        for(let i=0; i<365; i++) {
+            if(solar.next(i).getLunar().getMonth() < 0) { // lunar-javascript 中，閏月月份為負數
+                hasLeap = true;
+                break;
             }
         }
+        document.getElementById('leapIndicator').style.display = hasLeap ? 'block' : 'none';
 
-        function switchTab(id) {
-            document.querySelectorAll('.tab-content').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('panel-'+id).classList.add('active');
-            document.getElementById('tab-'+id).classList.add('active');
+        // 準備對年數據
+        const nextYear = solar.getYear() + 1;
+        const targetMonth = Math.abs(lunar.getMonth());
+        const targetDay = lunar.getDay();
+
+        // 方案 A 演算 (提前法)
+        let monthA = hasLeap ? (targetMonth - 1) : targetMonth;
+        let yearA = (hasLeap && targetMonth === 1) ? nextYear - 1 : nextYear;
+        if(monthA === 0) { monthA = 12; }
+        const resultA = getCorrectedSolar(yearA, monthA, targetDay);
+
+        // 方案 B 演算 (定日法)
+        const resultB = getCorrectedSolar(nextYear, targetMonth, targetDay);
+
+        updateUI('A', resultA, solar, hasLeap);
+        updateUI('B', resultB, solar, false);
+
+        window.scrollTo({ top: document.getElementById('resultArea').offsetTop - 20, behavior: 'smooth' });
+    }
+
+    function getCorrectedSolar(y, m, d) {
+        // 先獲取該農曆月對象
+        let tempLunar = Lunar.fromYmd(y, m, 1);
+        let monthDays = tempLunar.getMonthLen();
+        let finalD = d;
+        let corrected = false;
+
+        if (d > monthDays) {
+            finalD = monthDays;
+            corrected = true;
         }
-    </script>
+
+        const finalLunar = Lunar.fromYmd(y, m, finalD);
+        const s = finalLunar.getSolar();
+
+        return {
+            solarStr: `${s.getYear()} - ${String(s.getMonth()).padStart(2,'0')} - ${String(s.getDay()).padStart(2,'0')}`,
+            lunarStr: `農曆 ${finalLunar.getMonthInChinese()}月${finalLunar.getDayInChinese()}`,
+            corrected: corrected,
+            max: monthDays,
+            daysDiff: 0, // 稍後計算
+            solarObj: s
+        };
+    }
+
+    function updateUI(type, data, startSolar, leapLogic) {
+        document.getElementById(`date${type}`).innerText = data.solarStr;
+        document.getElementById(`lunar${type}`).innerText = data.lunarStr;
+        
+        // 計算天數差
+        const startJS = new Date(startSolar.getYear(), startSolar.getMonth()-1, startSolar.getDay());
+        const targetJS = new Date(data.solarObj.getYear(), data.solarObj.getMonth()-1, data.solarObj.getDay());
+        const diff = Math.round((targetJS - startJS) / (1000 * 60 * 60 * 24));
+        document.getElementById(`diff${type}`).innerText = `${diff} 天週期`;
+
+        let note = (type === 'A') 
+            ? (leapLogic ? "偵測到往生一年內包含閏月，依「死人無閏」俗例，對年應提前一個月進行。" : "此年度區間無閏月，對年依常規農曆月份進行。")
+            : "依「死人直」俗例，忽略閏月影響，固定於次年對應之農曆月日祭祀。";
+
+        if (data.corrected) {
+            note += `<br><span class="text-yellow-500 font-black tracking-tighter"><i class="fa-solid fa-circle-exclamation mr-1"></i> 大小月自動校正：</span> 因對年目標月僅有 ${data.max} 天，系統已自動將期日校準至該月最後一日。`;
+        }
+        document.getElementById(`note${type}`).innerHTML = note;
+    }
+
+    window.onload = function() {
+        // 預設為 2025/4/27 (農曆三月三十) 進行測試
+        document.getElementById('dateInput').value = "2025-04-27";
+        setTimeout(calculateAll, 500);
+    }
+</script>
+
 </body>
 </html>
